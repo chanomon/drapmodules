@@ -10,5 +10,7 @@ This model was developped over the years by making radio measurements of radio a
 ### Implementation
 With this relation the DRAP  model was implemented making a 2x2 degree  dot array of the world map. Each dot in the array is evaluted by its distance to the subsolar point during a solar flare and the X ray flux with the HAF formula. This implementation was developped in Python3.
 ### Running
-Thus, the input values for the model are the datetime of the solar flare in UT and the solar xray flux detected in W/m^2s. The output is a global map with the dot grid painted in colors showing the HAF with colors. 
+To run the python code (drapmodulesv0-1.py), edit in the script the input values for the model (flux,time, lines 132 and 133) which are the datetime of the solar flare in UT and the solar xray flux detected in W/m^2s.
+There are already example values in the code.
+The output is a global map with the dot grid painted in colors showing the HAF with colors. 
 ![DrapMap](https://user-images.githubusercontent.com/19211938/140848105-55649d72-6621-4ac0-afd4-9740d47568fd.png)
