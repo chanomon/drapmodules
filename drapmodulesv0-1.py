@@ -28,7 +28,7 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import ephem
 from datetime import datetime
-import turtle
+#import turtle
 import geopy.distance
 import matplotlib.cm as cm
 import pandas as pd
