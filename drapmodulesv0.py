@@ -23,6 +23,7 @@ import scipy.stats as st
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+mpl.use('TkAgg')  # Usa el backend TkAgg (interactivo)
 import matplotlib.patches as mpatches
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -63,11 +64,19 @@ def calc_param(flux,time):        #calculate parameters of solar afectation
     fdic = {}
     HAF = (10*math.log10(flux)+65)
     for f in freqs:
-        chirad = np.arccos((f/HAF)**(4/3)) ##zenith angle in radians
-        if not math.isnan(chirad):
-            r_sun = chirad*RT                                       ##radius of afectation
-        else:
-            r_sun = 0.0
+        #argument = (f/HAF)**(4/3)
+        #chirad = np.arccos((f/HAF)**(4/3)) ##zenith angle in radians
+        #if not math.isnan(chirad):
+        #    r_sun = chirad*RT                                       ##radius of afectation
+        #else:
+        #    r_sun = 0.0
+        ratio = (f / HAF) ** (4 / 3)
+        
+        try:
+            chirad = np.arccos(ratio)  # Intenta calcular el arco coseno
+            r_sun = chirad * RT  # Calcula el radio de afectación
+        except ValueError:  # Captura el error si ratio está fuera del rango [-1, 1]
+            r_sun = 0.0  # Asigna 0.0 si no se puede calcular chirad
         fdic[str(f)]=[r_sun]
     for f in range(len(freqs)):
         if f == len(freqs)-1:
@@ -125,9 +134,76 @@ def Drapmap3(flux,time):#ploting DRAP with NOAA points
     plt.rcParams['figure.dpi'] = 200
     #plt.legend()
     plt.show()
-#############################################
+
+
+def subsolarpointdistribution(fluxes,datetimes): #input: a list of xrs fluxes in the long band and a list of their respective t_max in datetime object.
+    dx = 5                                       #output: a finite distribution of subsolarpoints over an earths map.
+    dy = 5
+    size = len(fluxes)
+    fraction = 1/size
+    print(size)
+    lon = range(180,-180,-dx)#[str(i) for i in range(+180,-180,-1)]
+    lat = range(90,-90,-dy)#[str(j) for j in range(+90,-90,-1)]
+    geomatrix = pd.DataFrame(0, index=lat, columns=lon)
+    #flag = 0
+    #flag2= 0
+    for f,d in zip(fluxes,datetimes):
+        lo,la = subsolarpoint(d)
+        for index in geomatrix:
+            #print(index)
+            if la<index and la>index-dy:
+                y = index
+                #flag += 1
+                #print(index)
+                break
+            #else:
+            #    pass
+        for column in geomatrix:
+            #print(column)
+            if lo<column and lo>column-dx:
+                x = column
+                #flag2+= 1
+                #print(column)
+                break
+            #else:
+            #    pass
+        old_value = geomatrix.loc[y,x]
+        #print(x,y,f*1e8)
+        geomatrix.at[y,x]=old_value+fraction
+        #print(geomatrix.at[y,x])
+    #print(flag,flag2)
+    #plt.figure(figsize=(6, 3))
+    #ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=0.0))
+    #ax.set_extent([-180, 180, -90, 90])#, crs=ccrs.LambertCylindrical())
+    #plt.title('Solar Flare Energy distribution')
+    #ax.coastlines(resolution='110m')
+    #extent = [-180, 180, -90, 90]
+    #plt.imshow(heatmap.T, extent=extent, origin='lower')
+    #plt.imshow(geomatrix,extent=extent, cmap ="jet")
+    #plt.hist2d(geomatrix.columns,geomatrix.index,geomatrix, cmap='jet')
+    #plt.xticks(range(len(geomatrix.columns)), geomatrix.columns)
+    #plt.yticks(range(len(geomatrix.index)), geomatrix.index)
+    #plt.rcParams['figure.dpi'] = 200
+    #plt.colorbar(label='Xray flux (x1e8) in 1975-2017 ')
+    #plt.show()
+
+    plt.figure(figsize=(8, 4))
+    ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=0.0))
+    ax.set_extent([-180, 180, -90, 90])#, crs=ccrs.LambertCylindrical())
+    ax.coastlines(resolution='110m')
+    extent = [-180, 180, -90, 90]
+    ax.set_xticks(np.arange(-180, 181, 60), crs=ccrs.PlateCarree())
+    ax.set_yticks(np.arange(-90, 91, 30), crs=ccrs.PlateCarree())
+    ax.set_xlabel('Lon')
+    ax.set_ylabel('Lat')
+    plt.imshow(geomatrix,extent=extent, cmap ="jet")
+    plt.rcParams['figure.dpi'] = 200
+    plt.colorbar(shrink=0.6,label='Percentage of subsolar points')#fraction=0.0235
+    plt.show()
+
+
+#if __name__ == "__main__":
 ##### Definición de parámatros de fulguración
-#############################################
 ####como ejemplo se pone el evento X1 del 28 de Octubre
 flux = 1e-4   ##flujo de rayos X [W/m^2 s] ver como referencia la escala de la NOAA de fulguraciones
 time = datetime(2021, 10 , 28, hour=15, minute=35)	## Hora y fecha en tiempo universal del evento en formato YYYY,MM,DD hour=hh, minute=mm
